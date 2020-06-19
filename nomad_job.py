@@ -198,8 +198,13 @@ def run():
     if module.params.get('state') == "stop":
 
         try:
-            result = nomad_client.job.deregister_job(module.params.get('name'))
-            changed = True
+            job_json = nomad_client.job.get_job(module.params.get('name'))
+            if job_json['Status'] = 'dead':
+                changed = False
+                result = job_json
+            else:
+                result = nomad_client.job.deregister_job(module.params.get('name'))
+                changed = True
         except Exception as e:
             module.fail_json(msg=str(e))
 
@@ -208,11 +213,15 @@ def run():
         try:
             job = dict()
             job_json = nomad_client.job.get_job(module.params.get('name'))
-            job_json['Status'] = 'running'
-            job_json['Stop'] = False
-            job['job'] = job_json
-            result = nomad_client.jobs.register_job(job)
-            changed = True
+            if job_json['Status'] = 'running':
+                changed = False
+                result = job_json
+            else:
+                job_json['Status'] = 'running'
+                job_json['Stop'] = False
+                job['job'] = job_json
+                result = nomad_client.jobs.register_job(job)
+                changed = True
         except Exception as e:
             module.fail_json(msg=str(e))
 
